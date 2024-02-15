@@ -52,9 +52,26 @@ jobs:
             echo "ARTIFACT_NAME=prime_finder_x64" >> $GITHUB_ENV
           fi
         shell: bash
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ matrix.arch }}-${{ matrix.os }}
-          path: ./${{ env.ARTIFACT_NAME }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ env.ARTIFACT_NAME }}
+          asset_name: ${{ matrix.arch }}-${{ matrix.os }}
+          asset_content_type: application/octet-stream
+
+      
