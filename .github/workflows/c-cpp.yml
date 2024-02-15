@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C/C++ Cross-Platform CI
 
 on:
   push:
@@ -7,68 +7,44 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-upload-artifacts:
-    runs-on: ${{ matrix.os }}
+  build:
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             arch: x86
-            cc: gcc
-            cflags: "-Ofast -m32"
+            install_deps: "sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib"
+            build_command: "gcc -Ofast -m32 prime_finder.c -o prime_finder_x86 -lm"
           - os: ubuntu-latest
             arch: x64
-            cc: gcc
-            cflags: "-Ofast -march=native"
-          - os: ubuntu-latest
-            arch: arm64
-            cc: gcc
-            cflags: "-Ofast -march=native"
-          - os: windows-latest
-            arch: x86
-            cc: clang
-            cflags: "-Ofast"
+            install_deps: "sudo apt-get update && sudo apt-get install -y build-essential"
+            build_command: "gcc -Ofast prime_finder.c -o prime_finder_x64 -lm"
           - os: windows-latest
             arch: x64
-            cc: clang
-            cflags: "-Ofast"
-          - os: windows-latest
-            arch: arm64
-            cc: clang
-            cflags: "-Ofast"
-          - os: macos-latest
-            arch: x86
-            cc: clang
-            cflags: "-Ofast"
-          - os: macos-latest
-            arch: x64
-            cc: clang
-            cflags: "-Ofast"
-          - os: macos-latest
-            arch: arm64
-            cc: clang
-            cflags: "-Ofast"
+            install_deps: "choco install mingw"
+            build_command: "gcc -Ofast prime_finder.c -o prime_finder_x64.exe -lm"
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      
-    - name: Install Dependencies
-      run: |
-        if [ "${{ runner.os }}" = "Linux" ]; then
-          sudo apt-get update && sudo apt-get install -y ${{ matrix.cc }} make
-        elif [ "${{ runner.os }}" = "Windows" ]; then
-          choco install -y llvm make
-        else
-          brew install llvm make
-        fi
-      
-    - name: Build Program
-      run: ${{ matrix.cc }} ${{ matrix.cflags }} prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
-      
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: prime_finder_${{ matrix.arch }}_${{ matrix.os }}
-        path: ./prime_finder_${{ matrix.arch }}
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          ${{ matrix.install_deps }}
+        shell: bash
+
+      - name: Build Program
+        run: |
+          ${{ matrix.build_command }}
+        shell: bash
+        env:
+          CC: gcc
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: prime_finder_${{ matrix.arch }}_${{ matrix.os }}
+          path: ./${{ matrix.os == 'windows-latest' ? 'prime_finder_x64.exe' : 'prime_finder_x86' }}
