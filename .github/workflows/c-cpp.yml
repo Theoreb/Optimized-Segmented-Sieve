@@ -43,8 +43,18 @@ jobs:
         env:
           CC: gcc
 
+      - name: Set Artifact Name
+        id: set_artifact_name
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "ARTIFACT_NAME=prime_finder_x64.exe" >> $GITHUB_ENV
+          else
+            echo "ARTIFACT_NAME=prime_finder_x64" >> $GITHUB_ENV
+          fi
+        shell: bash
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: prime_finder_${{ matrix.arch }}_${{ matrix.os }}
-          path: ${{ matrix.os == 'windows-latest' ? 'prime_finder_x64.exe' :'prime_finder_x64'}}
+          name: ${{ matrix.arch }}-${{ matrix.os }}
+          path: ./${{ env.ARTIFACT_NAME }}
