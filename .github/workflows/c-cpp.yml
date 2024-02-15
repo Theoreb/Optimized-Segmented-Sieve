@@ -1,0 +1,46 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-upload-artifacts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86, x64, arm64]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      
+    - name: Install Dependencies
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          sudo apt-get update && sudo apt-get install -y clang make
+        elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+          choco install -y llvm make
+        else
+          brew install llvm make
+        fi
+      
+    - name: Build Program
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          if [ ${{ matrix.arch }} == "x86" ]; then
+            clang -Ofast -m32 prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
+          else
+            clang -Ofast -march=native prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
+          fi
+        else
+          clang -Ofast -march=native prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
+        fi
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: prime_finder_${{ matrix.arch }}_${{ matrix.os }}
+        path: ./prime_finder_${{ matrix.arch }}
