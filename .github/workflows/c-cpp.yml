@@ -47,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: prime_finder_${{ matrix.arch }}_${{ matrix.os }}
-          path: ./${{ matrix.os == 'windows-latest' ? 'prime_finder_x64.exe' : 'prime_finder_x86' }}
+          path: ${{ matrix.os == 'windows-latest' ? 'prime_finder_x64.exe' :'prime_finder_x64'}}
