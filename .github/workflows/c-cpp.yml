@@ -8,37 +8,65 @@ on:
 
 jobs:
   build-and-upload-artifacts:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        arch: [x86, x64, arm64]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            arch: x86
+            cc: gcc
+            cflags: "-Ofast -m32"
+          - os: ubuntu-latest
+            arch: x64
+            cc: gcc
+            cflags: "-Ofast -march=native"
+          - os: ubuntu-latest
+            arch: arm64
+            cc: gcc
+            cflags: "-Ofast -march=native"
+          - os: windows-latest
+            arch: x86
+            cc: clang
+            cflags: "-Ofast"
+          - os: windows-latest
+            arch: x64
+            cc: clang
+            cflags: "-Ofast"
+          - os: windows-latest
+            arch: arm64
+            cc: clang
+            cflags: "-Ofast"
+          - os: macos-latest
+            arch: x86
+            cc: clang
+            cflags: "-Ofast"
+          - os: macos-latest
+            arch: x64
+            cc: clang
+            cflags: "-Ofast"
+          - os: macos-latest
+            arch: arm64
+            cc: clang
+            cflags: "-Ofast"
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
       
     - name: Install Dependencies
       run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          sudo apt-get update && sudo apt-get install -y clang make
-        elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+        if [ "${{ runner.os }}" = "Linux" ]; then
+          sudo apt-get update && sudo apt-get install -y ${{ matrix.cc }} make
+        elif [ "${{ runner.os }}" = "Windows" ]; then
           choco install -y llvm make
         else
           brew install llvm make
         fi
       
     - name: Build Program
-      run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          if [ ${{ matrix.arch }} == "x86" ]; then
-            clang -Ofast -m32 prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
-          else
-            clang -Ofast -march=native prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
-          fi
-        else
-          clang -Ofast -march=native prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
-        fi
-        
+      run: ${{ matrix.cc }} ${{ matrix.cflags }} prime_finder.c -o prime_finder_${{ matrix.arch }} -lm
+      
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
