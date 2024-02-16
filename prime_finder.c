@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 uint64_t run(uint64_t max) {
-    uint64_t byteSize = ((max >> 4) + 1);
+    uint64_t byteSize = ((max >> 4) + 1) / 3 + 1;
     printf("Attempting allocating %lu bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
@@ -15,12 +15,12 @@ uint64_t run(uint64_t max) {
     }
     for (uint64_t i = 0; i < byteSize; i += 3) {
         mem[i] = 0b01001001;
-        if (i + 1 < byteSize) mem[i + 1] = 0b10010010;
-        if (i + 2 < byteSize) mem[i + 2] = 0b00100100;
+        mem[i + 1] = 0b10010010;
+        mem[i + 2] = 0b00100100;
     }
 
     uint64_t mm = max >> 1;
-    uint64_t sq = (uint64_t)sqrt(max);
+    uint64_t sq = (uint64_t)sqrt(max) | 1;
     uint64_t total = 2;
 
     for (uint64_t n = 5; n <= sq; n += 2) {
@@ -34,11 +34,22 @@ uint64_t run(uint64_t max) {
         }
     }
 
-    for (uint64_t n = sq + 1; n <= max; n += 2) {
-        uint64_t idx = (n - 2) >> 1;
-        if (!(mem[idx >> 3] & (1 << (idx & 7)))) {
+    cacheidx = (sq - 2) >> 1;
+    bit = 1 << (cacheidx & 7);
+    cacheidx >>= 3;
+    cache = mem[cacheidx];
+
+    for (uint64_t n = sq; n <= max; n += 2) {
+        if (!(cache & bit) {
             printf("%lu\t\t", n);
             total ++;
+        }
+
+        bit <<= 1;
+        if (bit & 256) {
+            bit = 1;
+            cacheidx++;
+            cache = mem[cacheidx];
         }
     }
 
