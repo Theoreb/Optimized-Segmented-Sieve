@@ -4,13 +4,15 @@
 #include <time.h>
 #include <stdint.h>
 
-uint64_t run(uint64_t max) {
+#include <immintrin.h>
+
+uint64_t compute(uint64_t max) {
     if (max < 5) {
         printf("Max value must be at least 5.\n");
         return -1;
     }
     uint64_t byteSize = ((max - 5) >> 4) + 1;
-    byteSize += 3 - (byteSize % 3); // Bit overflow for optimization
+    byteSize += 32 - (byteSize % 32); // Make it a multiple of 32
     printf("Attempting to allocate %lu bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
@@ -18,39 +20,59 @@ uint64_t run(uint64_t max) {
         printf("Failed to allocate memory.\n");
         return -1;
     }
-    for (uint64_t i = 0; i < byteSize; i += 3) {
-        mem[i] = 0b00100100; // if (i + 1 < byteSize)
-        mem[i + 1] = 0b01001001;
-        mem[i + 2] = 0b10010010;
+
+    __m256i pattern = _mm256_setr_epi8(
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010,
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001, 0b10010010, 
+        0b00100100, 0b01001001
+    );
+
+    for (uint64_t i = 0; i <= byteSize; i += 33) {
+        _mm256_storeu_si256((__m256i *)(mem + i), pattern);
+        mem[32 + i] = 0b10010010;
     }
 
     printf("Memory allocated.\n");
 
-    uint64_t halfMax = max >> 1;
-    uint64_t sqrtMax = (uint64_t)sqrt(max) | 1;
+    const uint64_t halfMax = max >> 1;
+    const uint64_t sqrtMax = (uint64_t)sqrt(max); // Have to be odd !
     uint64_t total = 2;
 
-    if (sqrtMax < 5) { sqrtMax = 5; }
+    if (sqrtMax < 5) { const sqrtMax = 5; }
 
     for (uint64_t n = 5; n <= sqrtMax; n += 2) {
-        uint64_t idx = (n - 5) >> 1;
-        unsigned char byte = mem[idx >> 3];
-        unsigned char bit = 1 << (idx & 7);
+        const uint64_t idx = (n - 5) >> 1;
+        const unsigned char byte = mem[idx >> 3];
+        const unsigned char bit = 1 << (idx & 7);
 
         if (!(byte & bit)) {
             total++;
+
+            const int startPos = (n * n - 5) >> 1;
+            
+            
             for (uint64_t k = (n * n - 5) >> 1; k <= halfMax; k += n) {
                 mem[k >> 3] |= (1 << (k & 7));
             }
         }
     }
 
-    uint64_t cacheidx = (sqrtMax - 5) >> 1;
-    unsigned char bit = 1 << ((cacheidx & 7) - 1);
+    printf("First pass completed.\n");
+
+    uint64_t cacheidx = (sqrtMax + 1 - 5) >> 1;
+    unsigned char bit = 1 << (cacheidx & 7);
     cacheidx >>= 3;
     unsigned char cache = mem[cacheidx];
 
-    for (uint64_t n = sqrtMax + 2; n <= max; n += 2) {
+    for (uint64_t n = sqrtMax + 1; n <= max; n += 2) {
         if (!(cache & bit)) {
             total++;
         }
@@ -61,6 +83,8 @@ uint64_t run(uint64_t max) {
             cache = mem[cacheidx];
         }
     }
+
+    printf("\nSecond pass completed.\n");
 
     free(mem);
     return total;
@@ -76,7 +100,7 @@ int main(int argc, char *argv[]) {
     }
 
     clock_t start = clock();
-    uint64_t total = run(max_value);
+    uint64_t total = compute(max_value);
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 
