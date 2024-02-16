@@ -55,14 +55,18 @@ jobs:
           fi
         shell: bash
         
+      - name: Create Unique Tag
+        id: unique_tag
+        run: echo "UNIQUE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.UNIQUE_TAG }}
+          release_name: Release ${{ env.UNIQUE_TAG }}
           draft: false
           prerelease: false
 
@@ -75,5 +79,3 @@ jobs:
           asset_path: ./${{ env.ARTIFACT_NAME }}
           asset_name: ${{ matrix.arch }}-${{ matrix.os }}
           asset_content_type: application/octet-stream
-
-      
