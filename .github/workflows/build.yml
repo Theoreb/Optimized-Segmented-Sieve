@@ -56,9 +56,6 @@ jobs:
           fi
         shell: bash
 
-      - name: Verify Artifact Exists
-        run: ls -la ${{ env.ARTIFACT_NAME }}
-
       - name: Create Unique Tag
         run: echo "UNIQUE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
@@ -72,9 +69,6 @@ jobs:
           release_name: Release ${{ env.UNIQUE_TAG }}
           draft: false
           prerelease: false
-
-      - name: Echo Upload URL
-        run: echo "Upload URL is ${{ steps.create_release.outputs.upload_url }}"
 
       - name: Upload Release Artifact
         uses: actions/upload-release-asset@v1
