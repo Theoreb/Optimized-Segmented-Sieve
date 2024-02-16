@@ -6,3 +6,4 @@ A simple yet very fast optimized version at bit-level of the Segmented Sieves Al
 
 (Version 2): Allocated 208333334 bytes (198 MB) for the operation. Found 455052511 primes from 2 to 10_000_000_000 in 30.593504 seconds on an Intel i7.
 
+(Lastest Version3): Calculated primes up to 10_000_000_000 in 14.576736 seconds on an Intel i7 with less than 1MB !
