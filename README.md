@@ -3,4 +3,5 @@ A simple yet very fast optimized version at bit-level of the Sieve of Eratosthen
 
 ## Test
 (Version 1): Without logs, the program found 455052511 primes numbers between 2 to 10_000_000_000 in 30.887541 seconds with a 596 MB cache on an Intel i7.
-(Version 2): The algorithm found 9592 primes numbers between 2 and 100_000 in 15.1259 seconds on a TI-83 calculator.
+(Version 2): Allocated 208333334 bytes (198 MB) for the operation. Found 455052511 primes from 2 to 10_000_000_000 in 30.593504 seconds on an Intel i7.
+
