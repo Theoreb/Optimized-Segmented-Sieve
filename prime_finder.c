@@ -4,7 +4,6 @@
 #include <time.h>
 #include <stdint.h>
 
-#include <immintrin.h>
 
 uint64_t compute(uint64_t max) {
     if (max < 5) {
@@ -12,7 +11,7 @@ uint64_t compute(uint64_t max) {
         return -1;
     }
     uint64_t byteSize = ((max - 5) >> 4) + 1;
-    byteSize += 32 - (byteSize % 32); // Make it a multiple of 32
+    byteSize += 3 - (byteSize % 3); // Make it a multiple of 3
     printf("Attempting to allocate %lu bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
@@ -21,23 +20,11 @@ uint64_t compute(uint64_t max) {
         return -1;
     }
 
-    __m256i pattern = _mm256_setr_epi8(
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010,
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001, 0b10010010, 
-        0b00100100, 0b01001001
-    );
 
-    for (uint64_t i = 0; i <= byteSize; i += 33) {
-        _mm256_storeu_si256((__m256i *)(mem + i), pattern);
-        mem[32 + i] = 0b10010010;
+    for (uint64_t i = 0; i <= byteSize; i += 3) {
+        mem[i] = 0b00100100;
+        mem[i + 1] = 0b01001001;
+        mem[i + 2] = 0b10010010;
     }
 
     printf("Memory allocated.\n");
