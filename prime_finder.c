@@ -58,6 +58,7 @@ void segmentedSieve(uint64_t max) {
     const uint64_t limit = sqrt(max);
     uint64_t count;
     uint64_t* basePrimes = simpleSieve(limit, &count);
+    printf("Found %lu primes from 2 to %lu\n", count, limit);
 
     if (!basePrimes) {
         printf("Simple sieve failed.\n");
@@ -74,7 +75,6 @@ void segmentedSieve(uint64_t max) {
     printf("Sieve using Segment size = %lu\n", segmentSize);
 
     uint64_t totalCount = count;
-
     for (uint64_t low = limit; low <= max; low += segmentSize) {
         
         const uint64_t high = fmin(low + segmentSize - 1, max);
@@ -112,7 +112,7 @@ uint64_t *simpleSieve(uint64_t limit, uint64_t* count) {
     }
     uint64_t byteSize = ((limit - 5) >> 4) + 1;
     byteSize += 3 - (byteSize % 3); // Make it a multiple of 3
-    printf("Attempting to allocate %lu bytes (%lu MB).\n", byteSize, byteSize >> 20);
+    printf("Attempting to allocate %lu bytes (%lu KB).\n", byteSize, byteSize >> 10);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
     if (!mem) {
@@ -130,8 +130,7 @@ uint64_t *simpleSieve(uint64_t limit, uint64_t* count) {
     primes[1] = 3;
     *count = 2;
 
-
-    for (uint64_t i = 0; i <= byteSize; i += 3) {
+    for (uint64_t i = 0; i < byteSize; i += 3) {
         mem[i] = 0b00100100;
         mem[i + 1] = 0b01001001;
         mem[i + 2] = 0b10010010;
