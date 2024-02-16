@@ -6,7 +6,7 @@
 
 uint64_t run(uint64_t max) {
     uint64_t byteSize = ((max >> 4) + 1) / 3 + 1;
-    printf("Attempting allocating %lu bytes.\n", byteSize);
+    printf("Attempting allocating %llu bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
     if (!mem) {
@@ -71,8 +71,8 @@ int main(int argc, char *argv[]) {
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 
-    printf("Allocated %lu bytes (%lu MB) for the operation.\n", ((max_value >> 4) + 1), ((max_value >> 4) + 1) >> 20);
-    printf("Found %lu primes from 2 to %lu in %f seconds\n", total, max_value, time_spent);
+    printf("Allocated %llu bytes (%llu MB) for the operation.\n", ((max_value >> 4) + 1), ((max_value >> 4) + 1) >> 20);
+    printf("Found %llu primes from 2 to %llu in %f seconds\n", total, max_value, time_spent);
 
     return 0;
 }
