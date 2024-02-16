@@ -10,7 +10,23 @@
 uint64_t* simpleSieve(uint64_t limit, uint64_t* count);
 void segmentedSieve(uint64_t max);
 
-void updateProgressBar(int progress, int total) {
+long getL1CacheSize() {
+    FILE* file = fopen("/sys/devices/system/cpu/cpu0/cache/index0/size", "r");
+    if (!file) {
+        perror("fopen");
+        return -1;
+    }
+    
+    long l1CacheSize = 0;
+    fscanf(file, "%ld", &l1CacheSize);
+    fclose(file);
+
+    printf("L1 Cache Size: %ld KB\n", l1CacheSize);
+
+    return l1CacheSize * 1024;
+}
+
+static void updateProgressBar(int progress, int total) {
     static int lastPercent = -1;
     int currentPercent = progress * 100 / total;
 
@@ -57,7 +73,7 @@ int main(int argc, char *argv[]) {
 void segmentedSieve(uint64_t max) {
     const uint64_t limit = sqrt(max);
     uint64_t count;
-    uint64_t* basePrimes = simpleSieve(limit, &count);
+    const uint64_t* basePrimes = simpleSieve(limit, &count);
     printf("Found %lu primes from 2 to %lu\n", count, limit);
 
     if (!basePrimes) {
@@ -65,16 +81,23 @@ void segmentedSieve(uint64_t max) {
         return;
     }
 
-    const uint64_t segmentSize = fmax(2, limit);
+    // Precompute all square of primes
+    uint64_t* precomputedPrimeSquares = (uint64_t*)malloc(count * sizeof(uint64_t));
+    for (uint64_t i = 0; i < count; i++) {
+        precomputedPrimeSquares[i] = basePrimes[i] * basePrimes[i];
+    }
+
+    const uint64_t segmentSize = getL1CacheSize()-1000;
     char* segment = malloc(segmentSize * sizeof(char));
     if (!segment) {
         printf("Memory allocation failed for the segment.\n");
         return;
     }
 
-    printf("Sieve using Segment size = %lu\n", segmentSize);
+    printf("Sieve using Segment size of %lu bytes (%lu KB)\n", segmentSize, segmentSize >> 10);
 
     uint64_t totalCount = count;
+
     for (uint64_t low = limit; low <= max; low += segmentSize) {
         
         const uint64_t high = fmin(low + segmentSize - 1, max);
@@ -85,9 +108,11 @@ void segmentedSieve(uint64_t max) {
 
         for (uint64_t i = 0; i < count; i++) {
             const uint64_t prime = basePrimes[i];
+            const uint64_t primeSquare = precomputedPrimeSquares[i];
+
             uint64_t minMultiple = (low + prime - 1) / prime * prime;
-            if (minMultiple < prime * prime)
-                minMultiple = prime * prime;
+            if (minMultiple < primeSquare)
+                minMultiple = primeSquare;
             for (uint64_t j = minMultiple; j <= high; j += prime) {
                 segment[j - low] = 1;
             }
@@ -102,7 +127,8 @@ void segmentedSieve(uint64_t max) {
     printf("\n Found %lu primes.\n", totalCount);
 
     free(segment);
-    free(basePrimes);
+    free((uint64_t*)basePrimes);
+    free(precomputedPrimeSquares);
 }
 
 uint64_t *simpleSieve(uint64_t limit, uint64_t* count) {
