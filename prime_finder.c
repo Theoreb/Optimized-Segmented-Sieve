@@ -3,51 +3,59 @@
 #include <math.h>
 #include <time.h>
 #include <stdint.h>
-#include <inttypes.h> // Portable PRIu64 macro
 
 uint64_t run(uint64_t max) {
-    uint64_t byteSize = ((max >> 4) + 1) / 3 + 1;
-    printf("Attempting to allocate %" PRIu64 " bytes.\n", byteSize);
+    if (max < 5) {
+        printf("Max value must be at least 5.\n");
+        return -1;
+    }
+    uint64_t byteSize = ((max - 5) >> 4) + 1;
+    byteSize += 3 - (byteSize % 3); // Bit overflow for optimization
+    printf("Attempting to allocate %lu bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
     if (!mem) {
         printf("Failed to allocate memory.\n");
-        return 0;
+        return -1;
     }
     for (uint64_t i = 0; i < byteSize; i += 3) {
-        mem[i] = 0b01001001;
-        mem[i + 1] = 0b10010010;
-        mem[i + 2] = 0b00100100;
+        mem[i] = 0b00100100; // if (i + 1 < byteSize)
+        mem[i + 1] = 0b01001001;
+        mem[i + 2] = 0b10010010;
     }
 
-    uint64_t mm = max >> 1;
-    uint64_t sq = (uint64_t)sqrt(max) | 1;
+    printf("Memory allocated.\n");
+
+    uint64_t halfMax = max >> 1;
+    uint64_t sqrtMax = (uint64_t)sqrt(max) | 1;
     uint64_t total = 2;
 
-    for (uint64_t n = 5; n <= sq; n += 2) {
-        uint64_t idx = (n - 2) >> 1;
-        if (!(mem[idx >> 3] & (1 << (idx & 7)))) {
+    if (sqrtMax < 5) { sqrtMax = 5; }
+
+    for (uint64_t n = 5; n <= sqrtMax; n += 2) {
+        uint64_t idx = (n - 5) >> 1;
+        unsigned char byte = mem[idx >> 3];
+        unsigned char bit = 1 << (idx & 7);
+
+        if (!(byte & bit)) {
             total++;
-            printf("%" PRIu64 "\t\t", n);
-            for (uint64_t k = (n * n - 2) >> 1; k <= mm; k += n) {
+            for (uint64_t k = (n * n - 5) >> 1; k <= halfMax; k += n) {
                 mem[k >> 3] |= (1 << (k & 7));
             }
         }
     }
-    
-    uint64_t cacheidx = (sq - 2) >> 1;
-    unsigned char bit = 1 << (cacheidx & 7);
+
+    uint64_t cacheidx = (sqrtMax - 5) >> 1;
+    unsigned char bit = 1 << ((cacheidx & 7) - 1);
     cacheidx >>= 3;
     unsigned char cache = mem[cacheidx];
 
-    for (uint64_t n = sq + 2; n <= max; n += 2) {
+    for (uint64_t n = sqrtMax + 2; n <= max; n += 2) {
         if (!(cache & bit)) {
-            printf("%" PRIu64 "\t\t", n);
             total++;
         }
 
-        bit <<= 1;
-        if (bit & 256) {
+        if ((bit <<= 1) == 0) {
             bit = 1;
             cacheidx++;
             cache = mem[cacheidx];
@@ -72,8 +80,8 @@ int main(int argc, char *argv[]) {
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 
-    printf("Allocated %" PRIu64 " bytes (%" PRIu64 " MB) for the operation.\n", ((max_value >> 4) + 1) / 3 + 1, (((max_value >> 4) + 1) / 3 + 1) >> 20);
-    printf("Found %" PRIu64 " primes from 2 to %" PRIu64 " in %f seconds\n", total, max_value, time_spent);
+    printf("Allocated %lu bytes (%lu MB) for the operation.\n", ((max_value >> 4) + 1) / 3 + 1, (((max_value >> 4) + 1) / 3 + 1) >> 20);
+    printf("Found %lu primes from 2 to %lu in %f seconds\n", total, max_value, time_spent);
 
     return 0;
 }
