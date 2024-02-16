@@ -1,5 +1,5 @@
 # Optimized-Segmented-SIEVE
-A simple yet very fast optimized version at bit-level of the Segmented Sieves Algorithm to find and count primes numbers up to 1_000_000_000 and more in theory in a few seconds.
+A simple yet very fast optimized version at bit-level and cache-level of the Segmented Sieves Algorithm to find and count primes numbers up to 1_000_000_000 and more in theory in a few seconds.
 
 ### Description of the Project
 
