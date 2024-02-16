@@ -3,10 +3,11 @@
 #include <math.h>
 #include <time.h>
 #include <stdint.h>
+#include <inttypes.h> // Portable PRIu64 macro
 
 uint64_t run(uint64_t max) {
     uint64_t byteSize = ((max >> 4) + 1) / 3 + 1;
-    printf("Attempting allocating %llu bytes.\n", byteSize);
+    printf("Attempting to allocate %" PRIu64 " bytes.\n", byteSize);
 
     unsigned char* mem = (unsigned char*)malloc(byteSize);
     if (!mem) {
@@ -26,23 +27,23 @@ uint64_t run(uint64_t max) {
     for (uint64_t n = 5; n <= sq; n += 2) {
         uint64_t idx = (n - 2) >> 1;
         if (!(mem[idx >> 3] & (1 << (idx & 7)))) {
-            total ++;
-            printf("%lu\t\t", n);
+            total++;
+            printf("%" PRIu64 "\t\t", n);
             for (uint64_t k = (n * n - 2) >> 1; k <= mm; k += n) {
                 mem[k >> 3] |= (1 << (k & 7));
             }
         }
     }
-
-    cacheidx = (sq - 2) >> 1;
-    bit = 1 << (cacheidx & 7);
+    
+    uint64_t cacheidx = (sq - 2) >> 1;
+    unsigned char bit = 1 << (cacheidx & 7);
     cacheidx >>= 3;
-    cache = mem[cacheidx];
+    unsigned char cache = mem[cacheidx];
 
-    for (uint64_t n = sq; n <= max; n += 2) {
-        if (!(cache & bit) {
-            printf("%lu\t\t", n);
-            total ++;
+    for (uint64_t n = sq + 2; n <= max; n += 2) {
+        if (!(cache & bit)) {
+            printf("%" PRIu64 "\t\t", n);
+            total++;
         }
 
         bit <<= 1;
@@ -71,8 +72,8 @@ int main(int argc, char *argv[]) {
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 
-    printf("Allocated %llu bytes (%llu MB) for the operation.\n", ((max_value >> 4) + 1), ((max_value >> 4) + 1) >> 20);
-    printf("Found %llu primes from 2 to %llu in %f seconds\n", total, max_value, time_spent);
+    printf("Allocated %" PRIu64 " bytes (%" PRIu64 " MB) for the operation.\n", ((max_value >> 4) + 1) / 3 + 1, (((max_value >> 4) + 1) / 3 + 1) >> 20);
+    printf("Found %" PRIu64 " primes from 2 to %" PRIu64 " in %f seconds\n", total, max_value, time_spent);
 
     return 0;
 }
